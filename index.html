@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seni kırdığım için çok üzgünüm...</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;1,500&family=Montserrat:wght@300;400&display=swap" rel="stylesheet">
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            background-color: #FDF8ED; /* Orijinal soft krem arka plan */
+            overflow: hidden;
+            font-family: 'Playfair Display', serif;
+            color: #5A4A42;
+            user-select: none;
+            cursor: pointer;
+        }
+
+        .message-container {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            z-index: 10;
+            pointer-events: none; /* Metne tıklanmasını engeller, çiçekler arkada açar */
+            width: 90%;
+            max-width: 600px;
+            animation: fadeIn 2s ease-in-out;
+        }
+
+        .heart {
+            font-size: 1.5rem;
+            color: #D8849B;
+            margin-bottom: 20px;
+            animation: pulse 2s infinite;
+        }
+
+        h1 {
+            font-size: 2.8rem;
+            font-weight: 400;
+            margin-bottom: 15px;
+            letter-spacing: 0.5px;
+        }
+
+        .highlight {
+            color: #D8849B; /* Nur ismine özel soft pembe */
+            font-style: italic;
+            font-weight: 500;
+        }
+
+        p {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 300;
+            line-height: 1.8;
+            color: #7A6F66;
+            margin-bottom: 40px;
+        }
+
+        .footer {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.75rem;
+            letter-spacing: 3px;
+            color: #AFA59D;
+            text-transform: uppercase;
+        }
+
+        /* Çiçek Animasyonu */
+        .flower {
+            position: absolute;
+            transform: translate(-50%, -50%) scale(0);
+            transform-origin: center center;
+            pointer-events: none;
+            animation: bloom 1s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translate(-50%, -45%); }
+            to { opacity: 1; transform: translate(-50%, -50%); }
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes bloom {
+            to { transform: translate(-50%, -50%) scale(1); opacity: 0.9; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="message-container">
+        <div class="heart">🤍</div>
+        <h1>Seni kırdığım için çok üzgünüm, <span class="highlight">Nur</span>.</h1>
+        <p>Benim için o kadar değerlisin ki...<br>Lütfen her şeyi geride bırakıp beni affet.</p>
+        <div class="footer">ÇİÇEKLERİ AÇTIRMAK İÇİN EKRANA DOKUN</div>
+    </div>
+
+    <script>
+        // Orijinal tasarımdaki pastel çiçek renkleri
+        const colors = ['#E2A9BE', '#D38DAB', '#E8C1D3', '#C596B5', '#E3A39A'];
+
+        document.addEventListener('mousedown', createFlower);
+        document.addEventListener('touchstart', (e) => {
+            // Mobilde de dokunarak çalışması için
+            const touch = e.touches[0];
+            createFlower(touch);
+        });
+
+        function createFlower(e) {
+            const size = Math.random() * 40 + 30; // 30px ile 70px arası rastgele boyut
+            const color = colors[Math.floor(Math.random() * colors.length)];
+            const rotation = Math.random() * 360;
+
+            const flower = document.createElement('div');
+            flower.className = 'flower';
+            flower.style.left = e.clientX + 'px';
+            flower.style.top = e.clientY + 'px';
+
+            // Zarif SVG çiçek çizimi
+            flower.innerHTML = `
+                <svg width="${size}" height="${size}" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style="transform: rotate(${rotation}deg)">
+                    <g transform="translate(50,50)">
+                        <path d="M0,0 C-20,-40 20,-40 0,0" fill="${color}" transform="rotate(0)" />
+                        <path d="M0,0 C-20,-40 20,-40 0,0" fill="${color}" transform="rotate(72)" />
+                        <path d="M0,0 C-20,-40 20,-40 0,0" fill="${color}" transform="rotate(144)" />
+                        <path d="M0,0 C-20,-40 20,-40 0,0" fill="${color}" transform="rotate(216)" />
+                        <path d="M0,0 C-20,-40 20,-40 0,0" fill="${color}" transform="rotate(288)" />
+                        <circle cx="0" cy="0" r="8" fill="#F4D03F" opacity="0.9"/>
+                    </g>
+                </svg>
+            `;
+
+            document.body.appendChild(flower);
+        }
+    </script>
+</body>
+</html>

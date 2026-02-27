@@ -10,12 +10,25 @@
             margin: 0;
             padding: 0;
             height: 100%;
-            background-color: #FDF8ED; /* Orijinal soft krem arka plan */
+            background-color: #FDF8ED;
             overflow: hidden;
             font-family: 'Playfair Display', serif;
             color: #5A4A42;
             user-select: none;
             cursor: pointer;
+        }
+
+        /* Sayaç Tasarımı */
+        #counter {
+            position: fixed;
+            top: 20px;
+            right: 25px;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.9rem;
+            color: #D8849B;
+            opacity: 0.7;
+            letter-spacing: 1px;
+            z-index: 100;
         }
 
         .message-container {
@@ -25,7 +38,7 @@
             transform: translate(-50%, -50%);
             text-align: center;
             z-index: 10;
-            pointer-events: none; /* Metne tıklanmasını engeller, çiçekler arkada açar */
+            pointer-events: none;
             width: 90%;
             max-width: 600px;
             animation: fadeIn 2s ease-in-out;
@@ -42,14 +55,9 @@
             font-size: 2.8rem;
             font-weight: 400;
             margin-bottom: 15px;
-            letter-spacing: 0.5px;
         }
 
-        .highlight {
-            color: #D8849B; /* Nur ismine özel soft pembe */
-            font-style: italic;
-            font-weight: 500;
-        }
+        .highlight { color: #D8849B; font-style: italic; }
 
         p {
             font-family: 'Montserrat', sans-serif;
@@ -68,32 +76,41 @@
             text-transform: uppercase;
         }
 
-        /* Çiçek Animasyonu */
+        /* Çiçek ve Not Animasyonları */
         .flower {
             position: absolute;
             transform: translate(-50%, -50%) scale(0);
-            transform-origin: center center;
             pointer-events: none;
-            animation: bloom 1s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+            animation: bloom 1s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards, 
+                       fadeOut 2s ease 2s forwards; /* 2 saniye sonra solmaya başlar */
         }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translate(-50%, -45%); }
-            to { opacity: 1; transform: translate(-50%, -50%); }
+        .pop-note {
+            position: absolute;
+            font-family: 'Playfair Display', serif;
+            font-style: italic;
+            color: #D8849B;
+            font-size: 1.2rem;
+            pointer-events: none;
+            z-index: 50;
+            animation: noteFade 3s ease-in-out forwards;
         }
 
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.1); }
-            100% { transform: scale(1); }
-        }
-
-        @keyframes bloom {
-            to { transform: translate(-50%, -50%) scale(1); opacity: 0.9; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
+        @keyframes bloom { to { transform: translate(-50%, -50%) scale(1); opacity: 0.9; } }
+        @keyframes fadeOut { to { opacity: 0; } }
+        @keyframes noteFade { 
+            0% { opacity: 0; transform: translateY(10px); } 
+            20% { opacity: 1; transform: translateY(0); }
+            80% { opacity: 1; }
+            100% { opacity: 0; transform: translateY(-20px); }
         }
     </style>
 </head>
 <body>
+
+    <div id="counter">Açan Çiçekler: 0</div>
 
     <div class="message-container">
         <div class="heart">🤍</div>
@@ -103,30 +120,80 @@
     </div>
 
     <script>
-        // Orijinal tasarımdaki pastel çiçek renkleri
         const colors = ['#E2A9BE', '#D38DAB', '#E8C1D3', '#C596B5', '#E3A39A'];
+        const notes = [
+    "İyi ki varsın 🌸", 
+    "Gülüşün hiç eksik olmasın ✨", 
+    "Seni çok seviyorum ❤️", 
+    "Her şey seninle güzel 🕊️", 
+    "Affedildim mi? ✨",
+    "Kalbimdeki yerin bambaşka 🤍",
+    "Sen gülünce dünya güzelleşiyor 🌷",
+    "Seninle her an çok kıymetli ⏳",
+    "Helyum balonu gibi sesimle 'Nur' diyorum 🎈",
+    "En sevdiğim manzara senin gülüşün 🖼️",
+    "Bu çiçekler senin zarafetin için 💐",
+    "Biraz daha affedildim mi? ☺️",
+    "Yüzünde bir tebessüm oldu mu? ✨",
+    "Günün bu çiçekler kadar renkli geçsin 🌈",
+    "Senin o güzel kalbine layık olmaya çalışıyorum 💎",
+    "Gülmek sana çok yakışıyor :)",
+    "İyi ki hayatıma girdin ✨",
+    "Her tıkladığında seni ne kadar önemsediğimi hatırla 🤍"
+];
+        
+        let flowerCount = 0;
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        let audioBuffer = null;
 
-        document.addEventListener('mousedown', createFlower);
-        document.addEventListener('touchstart', (e) => {
-            // Mobilde de dokunarak çalışması için
-            const touch = e.touches[0];
-            createFlower(touch);
-        });
+        // Ses Yükleme
+        fetch('nur-sesi.mp3')
+            .then(res => res.arrayBuffer())
+            .then(data => audioCtx.decodeAudioData(data))
+            .then(buf => audioBuffer = buf);
+
+        function playNurSound() {
+            if (!audioBuffer) return;
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const source = audioCtx.createBufferSource();
+            source.buffer = audioBuffer;
+            source.playbackRate.value = 1.8 + (Math.random() * 0.3); 
+            source.connect(audioCtx.destination);
+            source.start(0);
+        }
+
+        function showNote(x, y) {
+            const noteText = notes[Math.floor(Math.random() * notes.length)];
+            const noteDiv = document.createElement('div');
+            noteDiv.className = 'pop-note';
+            noteDiv.innerText = noteText;
+            noteDiv.style.left = x + 'px';
+            noteDiv.style.top = (y - 50) + 'px';
+            document.body.appendChild(noteDiv);
+            setTimeout(() => noteDiv.remove(), 3000);
+        }
 
         function createFlower(e) {
-            const size = Math.random() * 40 + 30; // 30px ile 70px arası rastgele boyut
-            const color = colors[Math.floor(Math.random() * colors.length)];
-            const rotation = Math.random() * 360;
+            const x = e.clientX || (e.touches && e.touches[0].clientX);
+            const y = e.clientY || (e.touches && e.touches[0].clientY);
+            if (!x || !y) return;
 
+            flowerCount++;
+            document.getElementById('counter').innerText = `Açan Çiçekler: ${flowerCount}`;
+            
+            playNurSound();
+            if (flowerCount % 10 === 0) showNote(x, y); // Her 10 tıklamada bir not çıkar
+
+            const size = Math.random() * 40 + 30;
+            const color = colors[Math.floor(Math.random() * colors.length)];
             const flower = document.createElement('div');
             flower.className = 'flower';
-            flower.style.left = e.clientX + 'px';
-            flower.style.top = e.clientY + 'px';
+            flower.style.left = x + 'px';
+            flower.style.top = y + 'px';
 
-            // Zarif SVG çiçek çizimi
             flower.innerHTML = `
-                <svg width="${size}" height="${size}" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style="transform: rotate(${rotation}deg)">
-                    <g transform="translate(50,50)">
+                <svg width="${size}" height="${size}" viewBox="0 0 100 100">
+                    <g transform="translate(50,50) rotate(${Math.random() * 360})">
                         <path d="M0,0 C-20,-40 20,-40 0,0" fill="${color}" transform="rotate(0)" />
                         <path d="M0,0 C-20,-40 20,-40 0,0" fill="${color}" transform="rotate(72)" />
                         <path d="M0,0 C-20,-40 20,-40 0,0" fill="${color}" transform="rotate(144)" />
@@ -134,11 +201,13 @@
                         <path d="M0,0 C-20,-40 20,-40 0,0" fill="${color}" transform="rotate(288)" />
                         <circle cx="0" cy="0" r="8" fill="#F4D03F" opacity="0.9"/>
                     </g>
-                </svg>
-            `;
-
+                </svg>`;
             document.body.appendChild(flower);
+            setTimeout(() => flower.remove(), 4000);
         }
+
+        document.addEventListener('mousedown', createFlower);
+        document.addEventListener('touchstart', (e) => { e.preventDefault(); createFlower(e); }, { passive: false });
     </script>
 </body>
 </html>
